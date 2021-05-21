@@ -1,7 +1,5 @@
 #include <iostream>
 #include <fstream>
-#include <vector>
-#include <string>
 
 using namespace std;
 
@@ -49,31 +47,6 @@ int dimensions(char inp_file_name[], int dimen[])
 
     dimen[0] = tuples;
     dimen[1] = attributes;
-
-    return 0;
-}
-
-int place_headers(char inp[], string headers[])
-{
-    ifstream fin(inp);
-
-    char line[101];
-
-    fin.getline(line, 100);
-    int idx = 0;
-
-    for (int i = 0; line[i] != '\0'; i++)
-    {
-        if (line[i] == ',')
-        {
-            idx++;
-            i++;
-        }
-
-        headers[idx].push_back(line[i]);
-    }
-
-    fin.close();
 
     return 0;
 }
@@ -255,16 +228,12 @@ int main()
 
     dimensions(inp_file_name, dimen);
 
-    string headers[dimen[1]]; // Stores the column names
-
     // Stores the data row-wise
 
     int **tuples = new int *[dimen[0]];
 
     for (int i = 0; i < dimen[0]; i++)
         tuples[i] = new int[dimen[1]];
-
-    place_headers(inp_file_name, headers);
 
     place_tuples(inp_file_name, tuples, dimen[0], dimen[1]);
 
