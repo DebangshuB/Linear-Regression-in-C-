@@ -2,132 +2,110 @@
 #include <fstream>
 #include <iomanip>
 
+#define precision 7
+
 #include "preprocessing.h"
+#include "LinearRegression.h"
 
 using namespace std;
 
-void display(int dimen[], double **tuples)
+void display(int row_size, int column_size, double **data)
 {
-    //cout << dimen[0] << "::" << dimen[1] << endl;
     cout << endl
          << endl;
-    for (int i = 0; i < dimen[0]; ++i)
+
+    cout << "Rows : " << row_size << endl;
+    cout << "Columns : " << column_size << endl;
+
+    cout << endl
+         << endl;
+
+    for (int i = 0; i < row_size; ++i)
     {
-        for (int j = 0; j < dimen[1]; ++j)
+        for (int j = 0; j < column_size; ++j)
         {
-            cout << std::setprecision(precision) << std::fixed << tuples[i][j] << " ";
+            cout << std::setprecision(precision) << std::fixed << data[i][j] << " ";
         }
         cout << endl;
     }
 }
 
-double calc_delta(double wts[], double **tuples, int row, int cols)
+void check(double **data, double weights[], int split, int row_size, int column_size)
 {
     double pred;
+    double error = 0.0;
+    double tot_error = 0.0;
 
-    pred = wts[0] * 1;
-    for (int i = 0; i < cols - 1; i++)
+    for (int i = split; i < row_size; i++)
     {
-        pred += (wts[i + 1] * tuples[row][i]);
-    }
-    return (double)(pred - tuples[row][cols - 1]);
-}
+        pred = weights[0] * 1;
 
-void LinearRegression(double **tuples, int rows, int cols, double wts[])
-{
-    double delta;
-    double avg_delta, sum_delta;
-    int batch_size = 2;
-    double learning_rate = 0.00001;
-    double MSE;
-    int epochs = 5;
-
-    for (int i = 0; i < cols; i++)
-    {
-        wts[i] = 1;
-    }
-
-    int e = 0;
-    while (e != epochs)
-    {
-        MSE = 0;
-        for (int i = 0; i < rows;)
+        for (int ii = 0; ii < column_size - 1; ii++)
         {
-            sum_delta = 0;
-
-            for (int ii = 0; ii < batch_size; ii++, i++)
-            {
-                delta = calc_delta(wts, tuples, i, cols);
-                sum_delta += delta;
-                MSE += delta * delta;
-            }
-
-            avg_delta = sum_delta / (double)(batch_size);
-            avg_delta = avg_delta * learning_rate;
-
-            wts[0] = wts[0] - avg_delta;
-            for (int idx = 1; idx < cols - 1; idx++)
-            {
-                wts[idx] = wts[idx] - (avg_delta * tuples[i][idx]);
-            }
+            pred += (weights[ii + 1] * data[i][ii]);
         }
 
-        //cout << "Epoch No : " << e + 1 << " : " << MSE / ((double)rows / (double)batch_size) << endl;
-        e++;
+        error = (abs((double)(pred - data[i][column_size - 1])) / data[i][column_size - 1]) * 100;
+        tot_error += error;
+        cout << setw(precision) << pred << " : " << setw(precision) << data[i][column_size - 1] << " " << setw(precision) << error << endl;
     }
-}
 
-void check(double **tuples, double wts[], int split, int rows, int cols)
-{
-    double pred;
-    double error = 0;
-
-    for (int i = split; i < rows; i++)
-    {
-        pred = wts[0] * 1;
-
-        for (int ii = 0; ii < cols - 1; ii++)
-        {
-            pred += (wts[ii + 1] * tuples[i][ii]);
-        }
-        cout << pred << " : " << tuples[i][cols - 1] << endl;
-        error += abs((double)(pred - tuples[i][cols - 1])) / tuples[i][cols - 1] * 100;
-    }
-    error = error / (double)(rows - split);
-    cout << "Accuracy : " << 100.00 - error << "%";
+    cout << endl
+         << "Accuracy : " << (100.0 - tot_error / (double)(row_size - split))
+         << endl;
 }
 
 int main()
 {
-    char input_file[] = "mlr03.csv";
-    int dimen[2];
+    char input_file[] = "input.csv";
+    int column_size;
+    int row_size;
 
-    get_dimensions(input_file, dimen);
+    get_dimensions(input_file, row_size, column_size);
 
-    // Stores the data row-wise
+    cout << endl
+         << endl;
 
-    double **tuples = new double *[dimen[0]];
+    cout << "Rows : " << row_size << endl;
+    cout << "Columns : " << column_size << endl;
 
-    for (int i = 0; i < dimen[0]; i++)
-        tuples[i] = new double[dimen[1]];
+    cout << endl
+         << endl;
 
-    place_tuples(input_file, tuples, dimen[0], dimen[1]);
+    double **data = new double *[row_size];
+    for (int i = 0; i < row_size; i++)
+        data[i] = new double[column_size];
 
-    //shuffle(tuples, dimen[0], dimen[1]);
+    load_data(input_file, data, row_size, column_size);
 
-    //int split = ttsplit(20, dimen[0]);
+    for (int i = 0; i < row_size; i++)
+        data[i][column_size - 1] *= 1;
 
-    display(dimen, tuples);
+    shuffle_data(data, row_size, column_size, 42);
 
-    //double weights[dimen[1]]; // One less as the targets are in the same array and one more for the bias term
+    //min_max_scaler(data, row_size, column_size);
 
-    //LinearRegression(tuples, split, dimen[1], weights);
+    int split = train_test_split(20.0, row_size);
 
-    // for (int i = 0; i < dimen[1]; i++)
-    // {
-    //     cout << weights[i] << endl;
-    // }
+    //display(row_size, column_size, data);
 
-    //check(tuples, weights, split, dimen[0], dimen[1]);
+    //Linear Regression
+
+    double weights[column_size]; // One less as the targets are in the same array and one more for the bias term
+    LinearRegression(data, weights, split, column_size, 10, 0.00001, 100);
+
+    cout << endl
+         << "Weights : " << endl;
+
+    for (int i = 0; i < column_size; i++)
+    {
+        cout << "W" << i << " " << setw(7) << weights[i] << endl;
+    }
+
+    cout << endl
+         << endl;
+
+    check(data, weights, split, row_size, column_size);
+
     return 0;
 }

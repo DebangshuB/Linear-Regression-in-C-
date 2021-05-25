@@ -1,7 +1,5 @@
-#include <iostream>
 #include <fstream>
-#include <iomanip>
-#define precision 7
+#include <cmath>
 
 using namespace std;
 
@@ -14,13 +12,13 @@ void swap(int &a, int &b)
     b = temp;
 }
 
-int get_attr(char line[])
+int get_attr(char data_line[])
 {
     int count = 0;
 
-    for (int i = 0; line[i] != '\0'; i++)
+    for (int i = 0; data_line[i] != '\0'; i++)
     {
-        if (line[i] == ',')
+        if (data_line[i] == ',')
             count++;
     }
 
@@ -29,13 +27,13 @@ int get_attr(char line[])
 
 //-------------------------External----------------------------
 
-int get_dimensions(char input_file[], int dimen[])
+void get_dimensions(char input_file[], int &row_size, int &column_size)
 {
     ifstream fin(input_file);
 
     if (!fin)
     {
-        return 1;
+        return;
     }
 
     char line[101];
@@ -58,15 +56,13 @@ int get_dimensions(char input_file[], int dimen[])
 
     tuples--;
 
-    dimen[0] = tuples;
-    dimen[1] = attributes;
-
-    return 0;
+    row_size = tuples;
+    column_size = attributes;
 }
 
-int place_tuples(char inp[], double **tuples, int rows, int cols)
+int load_data(char input_file[], double **data, int row_size, int column_size)
 {
-    ifstream fin(inp);
+    ifstream fin(input_file);
 
     char line[101];
     double curr = 0.0;
@@ -80,6 +76,7 @@ int place_tuples(char inp[], double **tuples, int rows, int cols)
 
     while (!fin.eof())
     {
+
         fin.getline(line, 100);
 
         for (int i = 0;; i++)
@@ -107,9 +104,9 @@ int place_tuples(char inp[], double **tuples, int rows, int cols)
             }
             else
             {
-                tuples[r][c++] = curr;
+                data[r][c++] = curr;
 
-                if (c >= cols)
+                if (c >= column_size)
                 {
                     c = 0;
                     r++;
@@ -129,24 +126,75 @@ int place_tuples(char inp[], double **tuples, int rows, int cols)
     return 0;
 }
 
-void shuffle(double **tuples, int rows, int cols)
+void shuffle_data(double **data, int row_size, int column_size, unsigned int seed)
 {
-    int times = rand() % rows;
-    int temp;
+    int times = rand() % row_size;
+    srand(seed);
 
     while (times--)
     {
-        int a = rand() % rows;
-        int b = rand() % rows;
+        int a = rand() % row_size;
+        int b = rand() % row_size;
 
-        for (int i = 0; i < cols; i++)
+        for (int i = 0; i < column_size; i++)
         {
-            swap(tuples[a][i], tuples[b][i]);
+            swap(data[a][i], data[b][i]);
         }
     }
 }
 
-int ttsplit(int per, int rows)
+int train_test_split(double percentage, int row_size)
 {
-    return (rows * (100 - per) / 100);
+    return (row_size * (100 - percentage) / 100);
+}
+
+void min_max_scaler(double **data, int row_size, int column_size)
+{
+    double min, max;
+
+    for (int col = 0; col < column_size; col++)
+    {
+        min = 1e9;
+        max = -1e9;
+
+        for (int i = 0; i < row_size; i++)
+        {
+            if (data[i][col] < min)
+                min = data[i][col];
+
+            if (data[i][col] > max)
+                max = data[i][col];
+        }
+
+        for (int i = 0; i < row_size; i++)
+        {
+            data[i][col] = (data[i][col] - min) / (max - min);
+        }
+    }
+}
+
+void standard_scaler(double **data, int row_size, int column_size)
+{
+    double mean, var, sum, sum2, std;
+
+    for (int col = 0; col < column_size; col++)
+    {
+        sum = 0.0;
+        sum2 = 0.0;
+
+        for (int i = 0; i < row_size; i++)
+        {
+            sum += data[i][col];
+            sum2 += data[i][col] * data[i][col];
+        }
+
+        mean = sum / (double)row_size;
+        var = (sum2 / (double)row_size) - (mean * mean);
+        std = sqrt(var);
+
+        for (int i = 0; i < row_size; i++)
+        {
+            data[i][col] = (data[i][col] - mean) / std;
+        }
+    }
 }
