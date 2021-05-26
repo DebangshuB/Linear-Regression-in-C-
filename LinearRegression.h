@@ -55,7 +55,7 @@ void LinearRegression(double **data, double weights[], int row_size, int column_
             weights[0] = weights[0] - wts_cng_fac[0];
             for (int i = 0; i <= column_size - 2; i++)
             {
-                weights[i] = weights[i] - wts_cng_fac[i];
+                weights[i + 1] = weights[i + 1] - wts_cng_fac[i + 1];
             }
 
             wts_cng_fac[0] = 0;

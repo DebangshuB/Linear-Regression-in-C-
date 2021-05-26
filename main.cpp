@@ -11,14 +11,14 @@ using namespace std;
 
 void display(int row_size, int column_size, double **data)
 {
-    cout << endl
-         << endl;
+    // cout << endl
+    //      << endl;
 
-    cout << "Rows : " << row_size << endl;
-    cout << "Columns : " << column_size << endl;
+    // cout << "Rows : " << row_size << endl;
+    // cout << "Columns : " << column_size << endl;
 
-    cout << endl
-         << endl;
+    // cout << endl
+    //      << endl;
 
     for (int i = 0; i < row_size; ++i)
     {
@@ -63,15 +63,6 @@ int main()
 
     get_dimensions(input_file, row_size, column_size);
 
-    cout << endl
-         << endl;
-
-    cout << "Rows : " << row_size << endl;
-    cout << "Columns : " << column_size << endl;
-
-    cout << endl
-         << endl;
-
     double **data = new double *[row_size];
     for (int i = 0; i < row_size; i++)
         data[i] = new double[column_size];
@@ -81,9 +72,9 @@ int main()
     for (int i = 0; i < row_size; i++)
         data[i][column_size - 1] *= 1;
 
-    shuffle_data(data, row_size, column_size, 42);
+    shuffle_data(data, row_size, column_size, 6969);
 
-    //min_max_scaler(data, row_size, column_size);
+    min_max_scaler(data, row_size, column_size);
 
     int split = train_test_split(20.0, row_size);
 
@@ -92,7 +83,7 @@ int main()
     //Linear Regression
 
     double weights[column_size]; // One less as the targets are in the same array and one more for the bias term
-    LinearRegression(data, weights, split, column_size, 10, 0.00001, 100);
+    LinearRegression(data, weights, split, column_size, 10, 0.1, 100);
 
     cout << endl
          << "Weights : " << endl;
